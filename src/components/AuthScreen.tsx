@@ -40,17 +40,9 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
       body.style.height = '';
     };
   }, [showModal]);
-
-  const handleToggleTheme = () => {
-    if (toggleTheme) toggleTheme();
-    const html = document.documentElement;
-    if (html.classList.contains('dark-mode')) {
-      html.classList.remove('dark-mode');
-    } else {
-      html.classList.add('dark-mode');
-    }
-  };
-
+const handleToggleTheme = () => {
+  toggleTheme();
+};
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -129,7 +121,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
       <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-cyan-400/10 dark:bg-cyan-500/5 rounded-full filter blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-indigo-400/10 dark:bg-indigo-500/5 rounded-full filter blur-[120px] pointer-events-none" />
 
-      {/* HEADER DA LANDING PAGE */}
+      {/* HEADER DA LANDING PA GE */}
       <header className="w-full max-w-6xl mx-auto px-8 py-6 flex items-center justify-between z-10 shrink-0">
         <motion.div 
           initial={{ opacity: 0, y: -15 }}
