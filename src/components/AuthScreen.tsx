@@ -1,15 +1,12 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../hooks/useTheme';
-import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useTransform,
-  useMotionValue,
-  useSpring,
-  useMotionTemplate,
-} from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from 'lenis';
+
+gsap.registerPlugin(ScrollTrigger);
 
 type AuthMode = 'login' | 'signup' | 'forgot_password';
 
@@ -35,69 +32,47 @@ const DOSSIERS = [
 ];
 
 const PROTOCOLO = [
-  {
-    numero: '01',
-    titulo: 'Credenciamento',
-    desc: 'Envie seu certificado e assine o compromisso protocolar de honestidade perante a comissão.',
-  },
-  {
-    numero: '02',
-    titulo: 'Triagem Diplomática',
-    desc: 'Uma comissão avalia compatibilidade de tratados, interesses mútuos e afinidades de longo prazo.',
-  },
-  {
-    numero: '03',
-    titulo: 'Credencial Ativa',
-    desc: 'Início oficial das negociações afetivas em canais confidenciais, sob sua total soberania.',
-  },
+  { numero: '01', titulo: 'Credenciamento', desc: 'Envie seu certificado e assine o compromisso protocolar de honestidade perante a comissão.' },
+  { numero: '02', titulo: 'Triagem Diplomática', desc: 'Uma comissão avalia compatibilidade de tratados, interesses mútuos e afinidades de longo prazo.' },
+  { numero: '03', titulo: 'Credencial Ativa', desc: 'Início oficial das negociações afetivas em canais confidenciais, sob sua total soberania.' },
 ];
 
-const RIBBONS = [
-  { top: '10%', left: '6%', size: 46, duration: 5.4 },
-  { top: '66%', left: '4%', size: 34, duration: 6.1 },
-  { top: '16%', right: '5%', size: 40, duration: 5.8 },
-  { top: '70%', right: '8%', size: 52, duration: 6.6 },
-  { top: '40%', left: '2%', size: 26, duration: 4.9 },
-];
-
-function Ribbon({ pos, size, duration }: { pos: React.CSSProperties; size: number; duration: number }) {
+/* ---------- gold filigree bar, fixed top/bottom, seal-style flourish ---------- */
+function FiligreeBar({ position }: { position: 'top' | 'bottom' }) {
   return (
-    <motion.svg
-      viewBox="0 0 64 64"
-      style={{ width: size, height: size, position: 'absolute', ...pos }}
-      animate={{ rotate: [-5, 5, -5] }}
-      transition={{ duration, repeat: Infinity, ease: 'easeInOut' }}
-      whileHover={{ scale: 1.3, rotate: 12 }}
-      className="text-seal drop-shadow-sm cursor-default pointer-events-auto"
-    >
-      <path
-        d="M32 32c-6-10-20-10-24-2-3 6 3 12 12 10-6 4-8 12-2 16 6 4 12-2 14-10 2 8 8 14 14 10 6-4 4-12-2-16 9 2 15-4 12-10-4-8-18-8-24 2z"
-        fill="currentColor"
-        opacity="0.8"
-      />
-      <circle cx="32" cy="32" r="4" fill="#fdfaf3" opacity="0.7" />
-    </motion.svg>
+    <div className={`fixed left-0 right-0 ${position === 'top' ? 'top-0' : 'bottom-0'} z-40 h-9 flex items-center justify-center pointer-events-none`}>
+      <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-seal to-transparent" />
+      <div className="relative flex items-center gap-2.5 bg-white px-4">
+        <span className="w-1 h-1 rotate-45 bg-seal" />
+        <span className="w-2 h-2 rotate-45 border border-seal" />
+        <span className="w-1 h-1 rotate-45 bg-seal" />
+      </div>
+    </div>
   );
 }
 
-function Scratches() {
-  const marks = useMemo(
+/* ---------- subtle gold particle field, no external deps ---------- */
+function GoldParticles() {
+  const dots = useMemo(
     () =>
-      Array.from({ length: 6 }).map(() => ({
-        top: `${Math.random() * 90}%`,
-        left: `${Math.random() * 90}%`,
-        rotate: Math.random() * 60 - 30,
-        length: Math.random() * 36 + 26,
+      Array.from({ length: 28 }).map(() => ({
+        left: `${Math.random() * 100}%`,
+        size: Math.random() * 2 + 1.5,
+        duration: Math.random() * 8 + 10,
+        delay: Math.random() * 8,
+        drift: Math.random() * 40 - 20,
       })),
     []
   );
   return (
-    <div className="dark:hidden absolute inset-0 pointer-events-none overflow-hidden">
-      {marks.map((m, i) => (
-        <span
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {dots.map((d, i) => (
+        <motion.span
           key={i}
-          className="absolute h-px bg-seal/25"
-          style={{ top: m.top, left: m.left, width: m.length, transform: `rotate(${m.rotate}deg)` }}
+          className="absolute bottom-0 rounded-full bg-seal"
+          style={{ left: d.left, width: d.size, height: d.size, opacity: 0.35 }}
+          animate={{ y: ['0%', '-120%'], x: [0, d.drift], opacity: [0, 0.5, 0] }}
+          transition={{ duration: d.duration, delay: d.delay, repeat: Infinity, ease: 'linear' }}
         />
       ))}
     </div>
@@ -105,38 +80,33 @@ function Scratches() {
 }
 
 /* ---------- reusable: reveal content as it arrives on screen while scrolling ---------- */
-function RevealOnScroll({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-}) {
+function RevealOnScroll({ children, className }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 0.92', 'start 0.4'] });
-  const opacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
-  const y = useTransform(scrollYProgress, [0, 1], [64, 0]);
-  const blurVal = useTransform(scrollYProgress, [0, 1], [14, 0]);
-  const filter = useTransform(blurVal, (v) => `blur(${v}px)`);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    gsap.fromTo(
+      el,
+      { opacity: 0, y: 60, filter: 'blur(10px)' },
+      {
+        opacity: 1,
+        y: 0,
+        filter: 'blur(0px)',
+        duration: 0.8,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: el, start: 'top 88%' },
+      }
+    );
+  }, []);
   return (
-    <motion.div ref={ref} style={{ opacity, y, filter, transitionDelay: `${delay}s` }} className={className}>
+    <div ref={ref} className={className}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
-/* ---------- reusable: magnetic button that leans toward the cursor ---------- */
-function MagneticButton({
-  children,
-  onClick,
-  className,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  className?: string;
-}) {
+/* ---------- magnetic button ---------- */
+function MagneticButton({ children, onClick, className }: { children: React.ReactNode; onClick: () => void; className?: string }) {
   const ref = useRef<HTMLButtonElement>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -170,58 +140,59 @@ function MagneticButton({
   );
 }
 
-/* ---------- dossier card: 3D tilt + cursor spotlight + floating icon ---------- */
-function DossierCard({ item }: { item: (typeof DOSSIERS)[number] }) {
+/* ---------- dossier card: 3D tilt + cursor spotlight + gold glow on hover + glassmorphism ---------- */
+function DossierCard({ item, setRef }: { item: (typeof DOSSIERS)[number]; setRef: (el: HTMLDivElement | null) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const mx = useMotionValue(0.5);
   const my = useMotionValue(0.5);
-  const rotateX = useSpring(useTransform(my, [0, 1], [10, -10]), { stiffness: 160, damping: 16 });
-  const rotateY = useSpring(useTransform(mx, [0, 1], [-10, 10]), { stiffness: 160, damping: 16 });
-  const xPercent = useTransform(mx, [0, 1], [0, 100]);
-  const yPercent = useTransform(my, [0, 1], [0, 100]);
-  const spotlight = useMotionTemplate`radial-gradient(240px circle at ${xPercent}% ${yPercent}%, rgba(212,175,55,0.22), transparent 70%)`;
+  const rotateX = useSpring(useMotionValue(0), { stiffness: 160, damping: 16 });
+  const rotateY = useSpring(useMotionValue(0), { stiffness: 160, damping: 16 });
+  const xPercent = useTransformSafe(mx);
+  const yPercent = useTransformSafe(my);
+  const spotlight = useMotionTemplate`radial-gradient(240px circle at ${xPercent}% ${yPercent}%, rgba(212,175,55,0.25), transparent 70%)`;
 
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = ref.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    mx.set((e.clientX - rect.left) / rect.width);
-    my.set((e.clientY - rect.top) / rect.height);
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    mx.set(px);
+    my.set(py);
+    rotateX.set((0.5 - py) * 12);
+    rotateY.set((px - 0.5) * 12);
   };
   const handleLeave = () => {
     mx.set(0.5);
     my.set(0.5);
+    rotateX.set(0);
+    rotateY.set(0);
   };
 
   return (
-    <div style={{ perspective: 900 }}>
+    <div
+      ref={(el) => {
+        setRef(el);
+      }}
+      style={{ perspective: 900 }}
+    >
       <motion.div
         ref={ref}
         onMouseMove={handleMove}
         onMouseLeave={handleLeave}
         style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-        className="group relative p-6 border border-seal/20 dark:border-electric-500/15 bg-cream-light dark:bg-embassy/50 rounded-xl text-left overflow-hidden"
+        className="group relative p-6 border border-seal/25 bg-white/60 dark:bg-embassy/40 backdrop-blur-md rounded-xl text-left overflow-hidden transition-shadow duration-300 hover:shadow-[0_0_28px_rgba(212,175,55,0.4)] hover:border-seal/70"
       >
-        {/* cursor spotlight */}
         <motion.div style={{ background: spotlight }} className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* ID-card corner brackets */}
         <span className="absolute top-2 left-2 w-3 h-3 border-t border-l border-seal/70" />
         <span className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-seal/70" />
 
-        {/* holographic scanline on hover */}
-        <span className="pointer-events-none absolute left-0 right-0 h-16 bg-gradient-to-b from-transparent via-electric-400/15 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-scan transition-opacity" />
-
         <div className="relative flex items-start justify-between mb-4">
-          <div
-            style={{ transform: 'translateZ(46px)' }}
-            className="w-10 h-10 rounded-lg bg-electric-500/10 flex items-center justify-center text-lg border border-electric-500/10 shadow-lg"
-          >
+          <div style={{ transform: 'translateZ(46px)' }} className="w-10 h-10 rounded-lg bg-seal/10 flex items-center justify-center text-lg border border-seal/20 shadow-lg">
             {item.icone}
           </div>
-          <span className="font-mono text-[9px] tracking-widest text-shimmer bg-[length:200%_auto] animate-shimmer uppercase">
-            {item.codigo}
-          </span>
+          <span className="font-mono text-[9px] tracking-widest text-seal-dark uppercase">{item.codigo}</span>
         </div>
         <h3 style={{ transform: 'translateZ(24px)' }} className="relative font-display italic text-xl font-semibold text-ink dark:text-white mb-2">
           {item.titulo}
@@ -234,38 +205,14 @@ function DossierCard({ item }: { item: (typeof DOSSIERS)[number] }) {
   );
 }
 
-/* ---------- ambient starfield, dark mode only ---------- */
-function Starfield() {
-  const stars = useMemo(
-    () =>
-      Array.from({ length: 46 }).map(() => ({
-        top: Math.random() * 100,
-        left: Math.random() * 100,
-        size: Math.random() * 1.6 + 0.6,
-        delay: Math.random() * 4,
-        duration: Math.random() * 3 + 2.5,
-      })),
-    []
-  );
-  return (
-    <div className="hidden dark:block absolute inset-0 overflow-hidden pointer-events-none">
-      {stars.map((s, i) => (
-        <span
-          key={i}
-          className="absolute rounded-full bg-electric-300 animate-pulse-soft"
-          style={{
-            top: `${s.top}%`,
-            left: `${s.left}%`,
-            width: `${s.size}px`,
-            height: `${s.size}px`,
-            animationDelay: `${s.delay}s`,
-            animationDuration: `${s.duration}s`,
-            opacity: 0.5,
-          }}
-        />
-      ))}
-    </div>
-  );
+/* small helper so xPercent/yPercent read as 0-100 in the motion template above */
+function useTransformSafe(v: ReturnType<typeof useMotionValue<number>>) {
+  const out = useMotionValue(50);
+  useEffect(() => {
+    const unsub = v.on('change', (val) => out.set(val * 100));
+    return unsub;
+  }, [v, out]);
+  return out;
 }
 
 export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
@@ -282,30 +229,52 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   const [message, setMessage] = useState<string | null>(null);
   const { theme, toggleTheme } = useTheme();
 
-  // page scroll progress bar
-  const { scrollYProgress: pageProgress } = useScroll();
-  const progressScaleX = useSpring(pageProgress, { stiffness: 120, damping: 24, restDelta: 0.001 });
+  // ---- Lenis smooth scroll, wired into GSAP's ScrollTrigger ----
+  useEffect(() => {
+    const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+    function raf(time: number) {
+      lenis.raf(time);
+      ScrollTrigger.update();
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+    lenis.on('scroll', ScrollTrigger.update);
+    return () => lenis.destroy();
+  }, []);
 
-  // ambient background parallax
-  const { scrollY } = useScroll();
-  const gridY = useTransform(scrollY, [0, 800], [0, 140]);
-  const glowLeftY = useTransform(scrollY, [0, 800], [0, -100]);
-  const glowRightY = useTransform(scrollY, [0, 800], [0, 120]);
+  // ---- Cena 1: carta pinada, girando no eixo Y conforme o scroll ----
+  const pinRef = useRef<HTMLDivElement>(null);
+  const letterRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const cardItemRefs = useRef<Array<HTMLDivElement | null>>([]);
 
-  // letter-pull hero: tall wrapper + sticky card, transformed by scroll progress
-  const letterWrapRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: letterProgress } = useScroll({ target: letterWrapRef, offset: ['start start', 'end start'] });
-  const letterY = useTransform(letterProgress, [0, 1], [0, -300]);
-  const letterRotate = useTransform(letterProgress, [0, 1], [0, -9]);
-  const letterScale = useTransform(letterProgress, [0, 0.6, 1], [1, 1.02, 0.8]);
-  const letterOpacity = useTransform(letterProgress, [0, 0.7, 1], [1, 1, 0]);
-  const revealOpacity = useTransform(letterProgress, [0.15, 0.55], [0, 1]);
-  const revealY = useTransform(letterProgress, [0.15, 0.55], [40, 0]);
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.set(cardsRef.current, { autoAlpha: 0 });
+      gsap.set(cardItemRefs.current, { y: -90, opacity: 0, rotate: () => gsap.utils.random(-8, 8) });
 
-  // timeline connector path, tied to the protocol section's scroll progress
-  const timelineRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: timelineProgress } = useScroll({ target: timelineRef, offset: ['start 0.75', 'end 0.4'] });
-  const pathLength = useSpring(timelineProgress, { stiffness: 90, damping: 24 });
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: pinRef.current,
+          start: 'top top',
+          end: '+=3200',
+          scrub: true,
+          pin: true,
+          anticipatePin: 1,
+        },
+      });
+
+      // a carta gira várias voltas no eixo Y enquanto dá zoom out
+      tl.to(letterRef.current, { rotationY: 1440, scale: 0.3, transformPerspective: 1200, ease: 'none' }, 0)
+        // some em fade perto do fim da rotação
+        .to(letterRef.current, { autoAlpha: 0, ease: 'none' }, 0.82)
+        // os cards entram em fade + caem na "mesa diplomática" com stagger
+        .to(cardsRef.current, { autoAlpha: 1, ease: 'none' }, 0.84)
+        .to(cardItemRefs.current, { y: 0, opacity: 1, rotate: 0, duration: 1, stagger: 0.18, ease: 'back.out(1.6)' }, 0.86);
+    }, pinRef);
+
+    return () => ctx.revert();
+  }, []);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -341,12 +310,8 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         if (error) throw error;
         setMessage('E-mail de recuperação enviado! Verifique sua caixa de entrada.');
       } else {
-        if (!isOfAge) {
-          throw new Error('Você precisa confirmar que tem 18 anos ou mais para se cadastrar.');
-        }
-        if (!certificateFile) {
-          throw new Error('Por favor, envie seu certificado');
-        }
+        if (!isOfAge) throw new Error('Você precisa confirmar que tem 18 anos ou mais para se cadastrar.');
+        if (!certificateFile) throw new Error('Por favor, envie seu certificado');
 
         const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
         if (authError) throw authError;
@@ -354,9 +319,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
 
         const fileExt = certificateFile.name.split('.').pop();
         const fileName = `${authData.user.id}/certificate.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('certificates')
-          .upload(fileName, certificateFile);
+        const { error: uploadError } = await supabase.storage.from('certificates').upload(fileName, certificateFile);
         if (uploadError) throw uploadError;
 
         const { error: profileError } = await supabase
@@ -386,155 +349,83 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   };
 
   return (
-    <div className="min-h-screen w-full bg-cream dark:bg-obsidian text-ink dark:text-slate-100 transition-colors duration-500 relative overflow-x-hidden selection:bg-electric-500/20">
-
-      {/* scroll progress bar */}
-      <motion.div
-        style={{ scaleX: progressScaleX }}
-        className="fixed top-0 left-0 right-0 h-[2px] origin-left z-40 bg-gradient-to-r from-electric-400 via-diplomat-500 to-seal"
-      />
-
-      {/* ambient circuit grid + starfield, dark mode only */}
-      <motion.div
-        style={{ y: gridY }}
-        className="hidden dark:block absolute inset-0 bg-grid pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_20%,black,transparent)]"
-      />
-      <Starfield />
-
-      {/* ambient glows, dark mode only */}
-      <motion.div style={{ y: glowLeftY }} className="hidden dark:block absolute top-[-10%] left-[-10%] w-[45vw] h-[45vw] bg-electric-500/10 rounded-full blur-[130px] pointer-events-none" />
-      <motion.div style={{ y: glowRightY }} className="hidden dark:block absolute top-[10%] right-[-10%] w-[40vw] h-[40vw] bg-diplomat-500/10 rounded-full blur-[130px] pointer-events-none" />
+    <div className="min-h-screen w-full bg-white dark:bg-obsidian text-ink dark:text-slate-100 relative overflow-x-hidden">
+      <FiligreeBar position="top" />
+      <FiligreeBar position="bottom" />
 
       {/* HEADER */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-cream-light/70 dark:bg-obsidian/60 border-b border-seal/15 dark:border-electric-500/10">
-        <div className="w-full max-w-6xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between">
-          <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-electric-500 to-diplomat-500 flex items-center justify-center shadow-lg shadow-electric-500/20 rotate-45">
+      <header className="fixed top-9 left-0 right-0 z-30 bg-white/80 dark:bg-obsidian/70 backdrop-blur-xl border-b border-seal/15">
+        <div className="w-full max-w-6xl mx-auto px-6 md:px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-seal-dark to-seal flex items-center justify-center shadow-lg shadow-seal/30 rotate-45">
               <span className="text-base text-white -rotate-45">◈</span>
             </div>
             <div className="leading-none">
               <h1 className="font-display text-2xl italic font-semibold tracking-tight text-ink dark:text-white">Deletinder</h1>
-              <p className="hidden sm:block font-mono text-[9px] tracking-[0.25em] text-seal dark:text-seal-light/90 uppercase mt-0.5">
-                Corpo Diplomático · Sênior
-              </p>
+              <p className="hidden sm:block font-mono text-[9px] tracking-[0.25em] text-seal-dark uppercase mt-0.5">Corpo Diplomático · Sênior</p>
             </div>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3">
+          </div>
+          <div className="flex items-center gap-3">
             <button
               onClick={() => openModal('login')}
               className="px-5 py-2.5 bg-obsidian dark:bg-white text-white dark:text-obsidian font-bold rounded-lg text-[11px] uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
             >
               Entrar
             </button>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={toggleTheme}
-              className="w-10 h-10 bg-cream-deep/60 dark:bg-embassy rounded-lg border border-seal/25 dark:border-electric-500/20 flex items-center justify-center text-base cursor-pointer"
+              className="w-10 h-10 bg-seal/10 dark:bg-embassy rounded-lg border border-seal/25 flex items-center justify-center text-base cursor-pointer"
               aria-label="Alternar tema"
             >
               {theme === 'light' ? '✨' : '🌙'}
-            </motion.button>
-          </motion.div>
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* HERO — cream backdrop, ribbons, letter-pull scroll */}
-      <div className="relative dark:hidden">
-        <div className="absolute inset-0 bg-cream" />
-        <Scratches />
-        <div className="absolute inset-0 pointer-events-none">
-          {RIBBONS.map((r, i) => (
-            <Ribbon key={i} pos={r as React.CSSProperties} size={r.size} duration={r.duration} />
-          ))}
-        </div>
-      </div>
-
-      <main ref={letterWrapRef} className="relative z-10 w-full min-h-[170vh]">
-        <div className="sticky top-24 w-full flex flex-col items-center px-6">
+      {/* TELA 1 — a carta pinada girando no eixo Y conforme o scroll */}
+      <section ref={pinRef} className="relative w-full h-screen flex items-center justify-center overflow-hidden">
+        <GoldParticles />
+        <div ref={letterRef} className="relative w-[300px] sm:w-[380px] aspect-[3/4]" style={{ transformStyle: 'preserve-3d' }}>
           <motion.div
-            style={{ y: letterY, rotate: letterRotate, scale: letterScale, opacity: letterOpacity }}
-            className="relative w-[300px] sm:w-[380px] aspect-[3/4]"
+            initial={{ opacity: 0, scale: 0.7, y: 80, filter: 'blur(16px)' }}
+            animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ type: 'spring', stiffness: 70, damping: 14, delay: 0.2 }}
+            className="relative w-full h-full rounded-sm bg-white border border-seal/40 shadow-[0_30px_70px_-15px_rgba(120,95,30,0.4)] px-8 py-10 flex flex-col items-center justify-center text-center overflow-hidden"
+            style={{ backfaceVisibility: 'hidden' }}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.82, rotateX: -18, filter: 'blur(14px)' }}
-              animate={{ opacity: 1, scale: 1, rotateX: 0, filter: 'blur(0px)' }}
-              transition={{ type: 'spring', stiffness: 80, damping: 16, delay: 0.15 }}
-              className="relative w-full h-full rounded-sm bg-cream-light dark:bg-embassy border border-seal/40 shadow-[0_30px_60px_-15px_rgba(120,95,30,0.35)] dark:shadow-2xl px-8 py-10 flex flex-col items-center justify-center text-center overflow-hidden"
-            >
-              <div className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(circle_at_1px_1px,#000_1px,transparent_0)] [background-size:6px_6px] pointer-events-none" />
-              <div className="absolute -left-10 top-10 w-[140%] h-8 bg-gradient-to-r from-seal-dark via-seal to-seal-light rotate-[-8deg] shadow-md" />
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-gradient-to-br from-diplomat-400 to-diplomat-600 border-4 border-cream-light shadow-lg flex items-center justify-center text-white text-lg">
-                ❤
-              </div>
-
-              <p className="font-mono text-[9px] tracking-[0.3em] text-seal-dark uppercase mt-8 mb-4">
-                Ato Diplomático Nº 001/2026
-              </p>
-              <h2 className="font-display italic text-3xl sm:text-4xl font-semibold text-ink leading-tight">
-                Diplomatize<br />seus encontros
-              </h2>
-              <p className="font-mono text-[9px] tracking-[0.2em] text-ink-soft uppercase mt-4">
-                Networking afetivo · Tratados de amor sênior
-              </p>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            style={{ opacity: revealOpacity, y: revealY }}
-            className="relative mt-10 flex flex-col items-center gap-5"
-          >
-            <p className="font-mono text-[10px] tracking-[0.3em] text-diplomat-500 uppercase">Credencial Liberada</p>
-            <MagneticButton
-              onClick={() => openModal('signup')}
-              className="relative px-12 py-4 bg-gradient-to-r from-seal-dark via-seal to-diplomat-500 bg-[length:200%_auto] hover:bg-right text-white font-bold text-xs rounded-xl shadow-xl transition-[background-position] duration-500 tracking-widest uppercase cursor-pointer"
-            >
-              ✨ Simule o amor da sua vida
-            </MagneticButton>
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-gradient-to-br from-seal to-seal-dark border-4 border-white shadow-lg flex items-center justify-center text-white text-lg">
+              ◈
+            </div>
+            <p className="font-mono text-[9px] tracking-[0.3em] text-seal-dark uppercase mt-8 mb-4">Ato Diplomático Nº 001/2026</p>
+            <h2 className="font-display italic text-3xl sm:text-4xl font-semibold text-ink leading-tight">Diplomatizando<br />Encontros</h2>
+            <p className="font-mono text-[9px] tracking-[0.2em] text-ink-soft uppercase mt-4">Networking afetivo · Tratados de amor sênior</p>
           </motion.div>
         </div>
-      </main>
+      </section>
 
-      {/* DOSSIER CARDS */}
-      <section className="relative z-10 w-full max-w-5xl mx-auto px-6 pb-24 pt-6">
+      {/* TELA 2 — cards, revelados após a rotação da carta */}
+      <section ref={cardsRef} className="relative z-10 w-full max-w-5xl mx-auto px-6 pb-24 pt-32">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {DOSSIERS.map((item, idx) => (
-            <RevealOnScroll key={item.titulo} delay={idx * 0.08}>
-              <DossierCard item={item} />
-            </RevealOnScroll>
+            <DossierCard key={item.titulo} item={item} setRef={(el) => (cardItemRefs.current[idx] = el)} />
           ))}
         </div>
       </section>
 
-      {/* PROTOCOLO DE ADESÃO — scroll-drawn timeline */}
-      <section ref={timelineRef} className="relative z-10 w-full max-w-3xl mx-auto px-6 pb-28">
+      {/* PROTOCOLO DE ADESÃO */}
+      <section className="relative z-10 w-full max-w-3xl mx-auto px-6 pb-28">
         <RevealOnScroll className="text-center mb-14">
-          <p className="font-mono text-[10px] tracking-[0.3em] text-seal uppercase mb-2">Protocolo Nº 07/2026</p>
+          <p className="font-mono text-[10px] tracking-[0.3em] text-seal-dark uppercase mb-2">Protocolo Nº 07/2026</p>
           <h3 className="font-display italic text-3xl md:text-4xl font-semibold text-ink dark:text-white">Ordem de Adesão</h3>
         </RevealOnScroll>
 
         <div className="relative pl-10 md:pl-14">
-          <svg className="absolute left-0 top-0 h-full w-8 md:w-10 overflow-visible" preserveAspectRatio="none">
-            <motion.line
-              x1="1" y1="0" x2="1" y2="100%"
-              stroke="url(#treatyGradient)"
-              strokeWidth="2"
-              strokeLinecap="round"
-              style={{ pathLength }}
-            />
-            <defs>
-              <linearGradient id="treatyGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#22e8ff" />
-                <stop offset="50%" stopColor="#d4af37" />
-                <stop offset="100%" stopColor="#ff2d78" />
-              </linearGradient>
-            </defs>
-          </svg>
-
+          <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-seal via-seal/40 to-transparent" />
           <div className="flex flex-col gap-14">
-            {PROTOCOLO.map((step, idx) => (
-              <RevealOnScroll key={step.numero} delay={idx * 0.1} className="relative">
-                <span className="absolute -left-10 md:-left-14 top-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-cream-light dark:bg-embassy border border-seal/50 flex items-center justify-center font-mono text-[10px] text-seal-dark dark:text-seal shadow-lg">
+            {PROTOCOLO.map((step) => (
+              <RevealOnScroll key={step.numero} className="relative">
+                <span className="absolute -left-10 md:-left-14 top-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white dark:bg-embassy border border-seal/50 flex items-center justify-center font-mono text-[10px] text-seal-dark dark:text-seal shadow-lg">
                   {step.numero}
                 </span>
                 <div className="pb-1">
@@ -550,15 +441,12 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
       {/* FINAL CTA */}
       <section className="relative z-10 w-full max-w-3xl mx-auto px-6 pb-28 text-center">
         <RevealOnScroll>
-          <div className="relative py-14 px-8 rounded-2xl border border-seal/20 dark:border-electric-500/15 bg-cream-deep/40 dark:bg-embassy/40 overflow-hidden">
-            <div className="absolute -inset-24 bg-gradient-to-r from-seal/10 via-transparent to-diplomat-500/10 blur-2xl pointer-events-none" />
-            <p className="font-mono text-[10px] tracking-[0.3em] text-diplomat-500 dark:text-diplomat-400 uppercase mb-3">Sessão Extraordinária</p>
-            <h3 className="font-display italic text-3xl md:text-4xl font-semibold text-ink dark:text-white mb-6">
-              Pronto para ratificar seu próximo tratado?
-            </h3>
+          <div className="relative py-14 px-8 rounded-2xl border border-seal/25 bg-white/60 dark:bg-embassy/40 backdrop-blur-md overflow-hidden">
+            <p className="font-mono text-[10px] tracking-[0.3em] text-seal-dark uppercase mb-3">Sessão Extraordinária</p>
+            <h3 className="font-display italic text-3xl md:text-4xl font-semibold text-ink dark:text-white mb-6">Pronto para ratificar seu próximo tratado?</h3>
             <MagneticButton
               onClick={() => openModal('signup')}
-              className="relative px-10 py-3.5 bg-gradient-to-r from-seal-dark via-seal to-diplomat-500 bg-[length:200%_auto] hover:bg-right text-white font-bold text-xs rounded-xl shadow-xl tracking-widest uppercase cursor-pointer"
+              className="relative px-10 py-3.5 bg-gradient-to-r from-seal-dark via-seal to-seal-dark bg-[length:200%_auto] hover:bg-right text-white font-bold text-xs rounded-xl shadow-xl tracking-widest uppercase cursor-pointer"
             >
               Abrir Credencial
             </MagneticButton>
@@ -566,7 +454,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         </RevealOnScroll>
       </section>
 
-      <footer className="relative z-10 w-full text-center py-6 text-[10px] font-mono tracking-wider text-ink-light dark:text-slate-500 border-t border-seal/15 dark:border-electric-500/10">
+      <footer className="relative z-10 w-full text-center py-10 text-[10px] font-mono tracking-wider text-ink-light dark:text-slate-500 border-t border-seal/15">
         <p>© 2026 DELETINDER · PERMISSÃO INSTITUCIONAL SOBERANA RESERVADA PARA MAIORES DE 18 ANOS</p>
       </footer>
 
@@ -579,7 +467,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ type: 'spring', duration: 0.4 }}
-              className="w-full max-w-sm max-h-[85vh] flex flex-col bg-white dark:bg-embassy border border-slate-200 dark:border-electric-500/20 rounded-2xl shadow-2xl relative overflow-hidden"
+              className="w-full max-w-sm max-h-[85vh] flex flex-col bg-white dark:bg-embassy border border-seal/25 rounded-2xl shadow-2xl relative overflow-hidden"
             >
               <button
                 onClick={() => setShowModal(false)}
@@ -592,7 +480,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
                 <div className="text-center mb-5">
                   <div className="flex justify-center mb-1.5 text-xl">◈</div>
                   <h1 className="font-display italic text-3xl font-semibold text-ink dark:text-white">Deletinder</h1>
-                  <p className="font-mono text-[10px] text-seal dark:text-seal-light/80 mt-1.5 uppercase tracking-widest">
+                  <p className="font-mono text-[10px] text-seal-dark mt-1.5 uppercase tracking-widest">
                     {mode === 'login' ? 'Credenciais Verificadas' : mode === 'signup' ? 'Requisição de Acesso' : 'Recuperação de Acesso'}
                   </p>
                 </div>
@@ -603,12 +491,12 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
                       <input
                         type="text" placeholder="Nome completo" value={fullName}
                         onChange={(e) => setFullName(e.target.value)} required
-                        className="w-full bg-slate-50 dark:bg-obsidian border border-slate-200 dark:border-electric-500/15 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-electric-500 transition-colors"
+                        className="w-full bg-slate-50 dark:bg-obsidian border border-seal/20 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-seal transition-colors"
                       />
                       <input
                         type="text" placeholder="Bio ou Filiação Acadêmica" value={bio}
                         onChange={(e) => setBio(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-obsidian border border-slate-200 dark:border-electric-500/15 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-electric-500 transition-colors"
+                        className="w-full bg-slate-50 dark:bg-obsidian border border-seal/20 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-seal transition-colors"
                       />
                     </>
                   )}
@@ -616,14 +504,14 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
                   <input
                     type="email" placeholder="E-mail de acesso" value={email}
                     onChange={(e) => setEmail(e.target.value)} required
-                    className="w-full bg-slate-50 dark:bg-obsidian border border-slate-200 dark:border-electric-500/15 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-electric-500 transition-colors"
+                    className="w-full bg-slate-50 dark:bg-obsidian border border-seal/20 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-seal transition-colors"
                   />
 
                   {mode !== 'forgot_password' && (
                     <input
                       type="password" placeholder="Senha secreta" value={password}
                       onChange={(e) => setPassword(e.target.value)} required minLength={6}
-                      className="w-full bg-slate-50 dark:bg-obsidian border border-slate-200 dark:border-electric-500/15 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-electric-500 transition-colors"
+                      className="w-full bg-slate-50 dark:bg-obsidian border border-seal/20 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-seal transition-colors"
                     />
                   )}
 
@@ -634,15 +522,14 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
                         <input
                           type="file" accept=".pdf,.jpg,.jpeg,.png"
                           onChange={(e) => setCertificateFile(e.target.files?.[0] || null)} required
-                          className="w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:border-0 file:rounded-xl file:bg-slate-100 dark:file:bg-obsidian file:text-slate-700 dark:file:text-slate-300 file:text-[11px] file:font-bold hover:file:bg-electric-500 hover:file:text-white cursor-pointer transition-colors"
+                          className="w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:border-0 file:rounded-xl file:bg-slate-100 dark:file:bg-obsidian file:text-slate-700 dark:file:text-slate-300 file:text-[11px] file:font-bold hover:file:bg-seal hover:file:text-white cursor-pointer transition-colors"
                         />
                       </div>
-
                       <div className="flex items-start gap-2 pt-2.5 pb-0.5">
                         <input
                           type="checkbox" id="age-confirmation" checked={isOfAge}
                           onChange={(e) => setIsOfAge(e.target.checked)}
-                          className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-electric-500 focus:ring-electric-500 cursor-pointer"
+                          className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-seal focus:ring-seal cursor-pointer"
                         />
                         <label htmlFor="age-confirmation" className="text-[11px] leading-tight text-ink-light dark:text-slate-500 select-none cursor-pointer">
                           Declaro que possuo <strong>18 anos ou mais</strong> e assumo total responsabilidade legal.
@@ -656,7 +543,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
 
                   <button
                     type="submit" disabled={loading}
-                    className="w-full mt-4 bg-gradient-to-r from-electric-500 to-diplomat-500 text-white font-bold text-xs py-3 rounded-xl transition-all disabled:opacity-50 cursor-pointer hover:opacity-95"
+                    className="w-full mt-4 bg-gradient-to-r from-seal-dark to-seal text-white font-bold text-xs py-3 rounded-xl transition-all disabled:opacity-50 cursor-pointer hover:opacity-95"
                   >
                     {loading ? 'Processando...' : mode === 'login' ? 'Autenticar' : mode === 'signup' ? 'Enviar Pedido' : 'Enviar Link'}
                   </button>
@@ -667,7 +554,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
                     <button
                       type="button"
                       onClick={() => { setMode('forgot_password'); setError(null); setMessage(null); }}
-                      className="text-[11px] text-ink-light dark:text-slate-500 hover:text-electric-500 bg-transparent border-0 cursor-pointer"
+                      className="text-[11px] text-ink-light dark:text-slate-500 hover:text-seal-dark bg-transparent border-0 cursor-pointer"
                     >
                       Esqueceu seus dados de acesso?
                     </button>
@@ -675,9 +562,9 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
                 )}
 
                 <div className="flex items-center my-4">
-                  <div className="flex-1 h-px bg-slate-200 dark:bg-electric-500/10" />
+                  <div className="flex-1 h-px bg-seal/15" />
                   <span className="px-2.5 text-slate-400 dark:text-slate-600 text-[10px] font-bold">OU</span>
-                  <div className="flex-1 h-px bg-slate-200 dark:bg-electric-500/10" />
+                  <div className="flex-1 h-px bg-seal/15" />
                 </div>
 
                 <div className="text-center text-xs pb-1">
@@ -690,7 +577,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
                       if (mode === 'login') setMode('signup'); else setMode('login');
                       setIsOfAge(false); setError(null); setMessage(null);
                     }}
-                    className="text-[11px] text-electric-500 font-bold hover:underline bg-transparent border-0 cursor-pointer"
+                    className="text-[11px] text-seal-dark font-bold hover:underline bg-transparent border-0 cursor-pointer"
                   >
                     {mode === 'login' ? 'Cadastre-se' : 'Conecte-se'}
                   </button>

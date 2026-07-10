@@ -32,11 +32,17 @@ export default {
           500: '#ff2d78',
           600: '#d61c5f',
         },
+        cream: {
+          light: '#fdfaf3',
+          DEFAULT: '#f7f0e1',
+          deep: '#efe4c9',
+          line: '#e2d2a3',
+        },
       },
       fontFamily: {
         mono: ['IBM Plex Mono', 'Fira Code', 'monospace'],
         sans: ['Inter', 'IBM Plex Sans', 'system-ui', 'sans-serif'],
-        display: ['Cormorant Garamond', 'Georgia', 'serif'],
+        display: ['Playfair Display', 'Georgia', 'serif'],
       },
       animation: {
         'fade-up': 'fadeUp 0.6s ease-out forwards',

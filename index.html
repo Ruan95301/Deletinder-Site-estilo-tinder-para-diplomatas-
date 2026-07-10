@@ -1,16 +1,87 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title data-default>Deletinder - Diplomatizando Relacionamentos Entre Diplomatas</title>
-    <meta property="og:image" content="https://bolt.new/static/og_default.png" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://bolt.new/static/og_default.png" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  ::selection {
+    @apply bg-electric-500/25 text-white;
+  }
+
+  :root {
+    --bg-primary: #fafafa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f0f0f0;
+    --text-primary: #262626;
+    --text-secondary: #8e8e8e;
+    --border-color: #dbdbdb;
+    --accent-blue: #0095f6;
+    --accent-pink: #e1306c;
+  }
+
+  .dark {
+    --bg-primary: #050914;
+    --bg-secondary: #0a1428;
+    --bg-tertiary: #0e1d38;
+    --text-primary: #f5f7fa;
+    --text-secondary: #8ea0c2;
+    --border-color: #1c2c4d;
+    --accent-blue: #00d4f5;
+    --accent-pink: #ff2d78;
+  }
+
+  .dark body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .bg-primary { background-color: var(--bg-primary); }
+  .bg-secondary { background-color: var(--bg-secondary); }
+  .bg-tertiary { background-color: var(--bg-tertiary); }
+  .text-primary { color: var(--text-primary); }
+  .text-secondary { color: var(--text-secondary); }
+  .border-theme { border-color: var(--border-color); }
+
+  /* Circuit-style grid backdrop used behind the hero in dark mode */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(0, 212, 245, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 212, 245, 0.06) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+
+  /* Gold shimmer sweep, used on treaty numerals */
+  .text-shimmer {
+    background: linear-gradient(90deg, #9c7a1f 0%, #f4d78c 25%, #d4af37 50%, #f4d78c 75%, #9c7a1f 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/* Instagram-like scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #dbdbdb; border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb { background: #1c2c4d; }
+::-webkit-scrollbar-thumb:hover { background: #8e8e8e; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #00d4f5; }
