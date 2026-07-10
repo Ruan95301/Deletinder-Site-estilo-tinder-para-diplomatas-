@@ -5,53 +5,117 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate }
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-
+import { cn } from '../utils/cn';
+import { FileText, ShieldAlert, MailOpen, Users, Globe2, CheckCircle2, ChevronRight, Sun, Moon } from 'lucide-react';
 gsap.registerPlugin(ScrollTrigger);
 
 type AuthMode = 'login' | 'signup' | 'forgot_password';
-
 const DOSSIERS = [
   {
-    codigo: 'ATO Nº 001/2026',
-    titulo: 'Tratados Bilaterais',
-    desc: 'Chega de conversas superficiais. Aqui as afinidades são resolvidas por meio de acordos multilaterais e diplomacia do afeto.',
-    icone: '📜',
-  },
-  {
     codigo: 'ATO Nº 002/2026',
-    titulo: 'Pactos de Afinidade',
-    desc: 'Encontre seu match sênior de acordo com afinidades de blocos econômicos, comissões de segurança e pactos globais.',
-    icone: '❤️',
+    titulo: 'Tratados Bilaterais',
+    desc: 'O primeiro encontro é uma negociação de bom gosto: duas biografias colocadas à mesa, interesses declarados, fronteiras respeitadas — antes de qualquer promessa.',
+    icone: FileText,
   },
   {
     codigo: 'ATO Nº 003/2026',
     titulo: 'Canais Confidenciais',
-    desc: 'Salas de negociação direta e criptografadas para traçar planos e estabelecer alianças duradouras de delegação.',
-    icone: '🥂',
+    desc: 'Um gabinete reservado, longe de olhares curiosos, onde a conversa amadurece no seu próprio tempo — sob sigilo de Estado.',
+    icone: ShieldAlert,
+  },
+  {
+    codigo: 'ATO Nº 004/2026',
+    titulo: 'A Carta de Intenções',
+    desc: 'Onde a diplomacia abre portas para o amor. Um espaço de agenciamento afetivo de alto nível, desenhado especificamente para conexões maduras.',
+    icone: MailOpen,
   },
 ];
 
+const STATS = [
+  { numero: '12.400+', label: 'Credenciados Ativos', icone: Users },
+  { numero: '38', label: 'Delegações Regionais', icone: Globe2 },
+  { numero: '94%', label: 'Taxa de Sucesso', icone: CheckCircle2 },
+];
 const PROTOCOLO = [
   { numero: '01', titulo: 'Credenciamento', desc: 'Envie seu certificado e assine o compromisso protocolar de honestidade perante a comissão.' },
   { numero: '02', titulo: 'Triagem Diplomática', desc: 'Uma comissão avalia compatibilidade de tratados, interesses mútuos e afinidades de longo prazo.' },
   { numero: '03', titulo: 'Credencial Ativa', desc: 'Início oficial das negociações afetivas em canais confidenciais, sob sua total soberania.' },
 ];
 
-/* ---------- gold filigree bar, fixed top/bottom, seal-style flourish ---------- */
+function Logo({ size = 40, className = '' }: { size?: number; className?: string }) {
+  const leafPoints = [
+    { x: 46, y: 86, rot: -70 },
+    { x: 40, y: 78, rot: -55 },
+    { x: 35, y: 68, rot: -40 },
+    { x: 31, y: 56, rot: -25 },
+    { x: 29, y: 44, rot: -10 },
+    { x: 29, y: 32, rot: 5 },
+    { x: 31, y: 22, rot: 20 },
+  ];
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" className={className}>
+      <defs>
+        <linearGradient id="dd-flame" x1="50" y1="20" x2="50" y2="58" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#7ceaff" />
+          <stop offset="55%" stopColor="#00d4f5" />
+          <stop offset="100%" stopColor="#00a8c9" />
+        </linearGradient>
+        <linearGradient id="dd-gold" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#f4d78c" />
+          <stop offset="100%" stopColor="#9c7a1f" />
+        </linearGradient>
+      </defs>
+      <g fill="url(#dd-gold)">
+        {leafPoints.map((p, i) => (
+          <ellipse key={`l-${i}`} cx={p.x} cy={p.y} rx={5.2 - i * 0.35} ry={2.2} transform={`rotate(${p.rot} ${p.x} ${p.y})`} />
+        ))}
+        {leafPoints.map((p, i) => (
+          <ellipse key={`r-${i}`} cx={100 - p.x} cy={p.y} rx={5.2 - i * 0.35} ry={2.2} transform={`rotate(${-p.rot} ${100 - p.x} ${p.y})`} />
+        ))}
+      </g>
+      <circle cx="50" cy="53" r="20" fill="none" stroke="url(#dd-gold)" strokeWidth="1.4" opacity="0.85" />
+      <ellipse cx="50" cy="53" rx="20" ry="7" fill="none" stroke="url(#dd-gold)" strokeWidth="0.8" opacity="0.55" />
+      <ellipse cx="50" cy="53" rx="9" ry="20" fill="none" stroke="url(#dd-gold)" strokeWidth="0.8" opacity="0.55" />
+      <line x1="30" y1="53" x2="70" y2="53" stroke="url(#dd-gold)" strokeWidth="0.8" opacity="0.55" />
+      <path d="M50,58 C44,50 44,40 50,24 C56,40 56,50 50,58 Z" fill="url(#dd-flame)" />
+    </svg>
+  );
+}
+function GlowLogo({ size = 40, className = '' }: { size?: number; className?: string }) {
+  return (
+    <motion.div
+      animate={{
+        filter: [
+          'drop-shadow(0 0 2px rgba(0,212,245,0.35))',
+          'drop-shadow(0 0 10px rgba(0,212,245,0.75))',
+          'drop-shadow(0 0 2px rgba(0,212,245,0.35))',
+        ],
+      }}
+      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+      className={className}
+    >
+      <Logo size={size} />
+    </motion.div>
+  );
+}
+
 function FiligreeBar({ position }: { position: 'top' | 'bottom' }) {
   return (
-    <div className={`fixed left-0 right-0 ${position === 'top' ? 'top-0' : 'bottom-0'} z-40 h-9 flex items-center justify-center pointer-events-none`}>
-      <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-seal to-transparent" />
-      <div className="relative flex items-center gap-2.5 bg-white px-4">
-        <span className="w-1 h-1 rotate-45 bg-seal" />
-        <span className="w-2 h-2 rotate-45 border border-seal" />
-        <span className="w-1 h-1 rotate-45 bg-seal" />
+    <div className={cn(
+      "fixed left-0 right-0 z-40 h-9 flex items-center justify-center pointer-events-none",
+      position === 'top' ? 'top-0' : 'bottom-0'
+    )}>
+      <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+      <div className="relative flex items-center gap-2.5 bg-white dark:bg-neutral-950 px-4">
+        <span className="w-1 h-1 rotate-45 bg-amber-500" />
+        <span className="w-2 h-2 rotate-45 border border-amber-500/60" />
+        <span className="w-1 h-1 rotate-45 bg-amber-500" />
       </div>
     </div>
   );
 }
 
-/* ---------- subtle gold particle field, no external deps ---------- */
 function GoldParticles() {
   const dots = useMemo(
     () =>
@@ -61,6 +125,7 @@ function GoldParticles() {
         duration: Math.random() * 8 + 10,
         delay: Math.random() * 8,
         drift: Math.random() * 40 - 20,
+        color: Math.random() > 0.65 ? 'bg-cyan-400' : 'bg-amber-500',
       })),
     []
   );
@@ -69,7 +134,7 @@ function GoldParticles() {
       {dots.map((d, i) => (
         <motion.span
           key={i}
-          className="absolute bottom-0 rounded-full bg-seal"
+          className={cn("absolute bottom-0 rounded-full", d.color)}
           style={{ left: d.left, width: d.size, height: d.size, opacity: 0.35 }}
           animate={{ y: ['0%', '-120%'], x: [0, d.drift], opacity: [0, 0.5, 0] }}
           transition={{ duration: d.duration, delay: d.delay, repeat: Infinity, ease: 'linear' }}
@@ -78,25 +143,26 @@ function GoldParticles() {
     </div>
   );
 }
-
-/* ---------- reusable: reveal content as it arrives on screen while scrolling ---------- */
 function RevealOnScroll({ children, className }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    gsap.fromTo(
-      el,
-      { opacity: 0, y: 60, filter: 'blur(10px)' },
-      {
-        opacity: 1,
-        y: 0,
-        filter: 'blur(0px)',
-        duration: 0.8,
-        ease: 'power2.out',
-        scrollTrigger: { trigger: el, start: 'top 88%' },
-      }
-    );
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        el,
+        { opacity: 0, y: 60, filter: 'blur(10px)' },
+        {
+          opacity: 1,
+          y: 0,
+          filter: 'blur(0px)',
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none none' },
+        }
+      );
+    }, el);
+    return () => ctx.revert();
   }, []);
   return (
     <div ref={ref} className={className}>
@@ -105,7 +171,6 @@ function RevealOnScroll({ children, className }: { children: React.ReactNode; cl
   );
 }
 
-/* ---------- magnetic button ---------- */
 function MagneticButton({ children, onClick, className }: { children: React.ReactNode; onClick: () => void; className?: string }) {
   const ref = useRef<HTMLButtonElement>(null);
   const x = useMotionValue(0);
@@ -139,9 +204,7 @@ function MagneticButton({ children, onClick, className }: { children: React.Reac
     </motion.button>
   );
 }
-
-/* ---------- dossier card: 3D tilt + cursor spotlight + gold glow on hover + glassmorphism ---------- */
-function DossierCard({ item, setRef }: { item: (typeof DOSSIERS)[number]; setRef: (el: HTMLDivElement | null) => void }) {
+function DossierCard({ item }: { item: typeof DOSSIERS[number] }) {
   const ref = useRef<HTMLDivElement>(null);
   const mx = useMotionValue(0.5);
   const my = useMotionValue(0.5);
@@ -169,35 +232,30 @@ function DossierCard({ item, setRef }: { item: (typeof DOSSIERS)[number]; setRef
     rotateY.set(0);
   };
 
+  const IconComponent = item.icone;
+
   return (
-    <div
-      ref={(el) => {
-        setRef(el);
-      }}
-      style={{ perspective: 900 }}
-    >
+    <div style={{ perspective: 900 }}>
       <motion.div
         ref={ref}
         onMouseMove={handleMove}
         onMouseLeave={handleLeave}
         style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-        className="group relative p-6 border border-seal/25 bg-white/60 dark:bg-embassy/40 backdrop-blur-md rounded-xl text-left overflow-hidden transition-shadow duration-300 hover:shadow-[0_0_28px_rgba(212,175,55,0.4)] hover:border-seal/70"
+        className="group relative p-6 border border-amber-500/25 bg-white/60 dark:bg-neutral-900/40 backdrop-blur-md rounded-xl text-left overflow-hidden transition-shadow duration-300 hover:shadow-[0_0_28px_rgba(212,175,55,0.4)] hover:border-amber-500/70"
       >
         <motion.div style={{ background: spotlight }} className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-        <span className="absolute top-2 left-2 w-3 h-3 border-t border-l border-seal/70" />
-        <span className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-seal/70" />
-
+        <span className="absolute top-2 left-2 w-3 h-3 border-t border-l border-amber-500/70" />
+        <span className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-amber-500/70" />
         <div className="relative flex items-start justify-between mb-4">
-          <div style={{ transform: 'translateZ(46px)' }} className="w-10 h-10 rounded-lg bg-seal/10 flex items-center justify-center text-lg border border-seal/20 shadow-lg">
-            {item.icone}
+          <div style={{ transform: 'translateZ(46px)' }} className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-lg text-amber-500">
+            <IconComponent className="w-5 h-5" />
           </div>
-          <span className="font-mono text-[9px] tracking-widest text-seal-dark uppercase">{item.codigo}</span>
+          <span className="font-mono text-[9px] tracking-widest text-amber-600 uppercase">{item.codigo}</span>
         </div>
-        <h3 style={{ transform: 'translateZ(24px)' }} className="relative font-display italic text-xl font-semibold text-ink dark:text-white mb-2">
+        <h3 style={{ transform: 'translateZ(24px)' }} className="relative font-serif italic text-xl font-semibold text-neutral-900 dark:text-white mb-2">
           {item.titulo}
         </h3>
-        <p style={{ transform: 'translateZ(24px)' }} className="relative text-ink-soft dark:text-slate-400 text-[12px] leading-relaxed font-light">
+        <p style={{ transform: 'translateZ(24px)' }} className="relative text-neutral-600 dark:text-neutral-400 text-[12px] leading-relaxed font-light">
           {item.desc}
         </p>
       </motion.div>
@@ -205,7 +263,6 @@ function DossierCard({ item, setRef }: { item: (typeof DOSSIERS)[number]; setRef
   );
 }
 
-/* small helper so xPercent/yPercent read as 0-100 in the motion template above */
 function useTransformSafe(v: ReturnType<typeof useMotionValue<number>>) {
   const out = useMotionValue(50);
   useEffect(() => {
@@ -215,7 +272,31 @@ function useTransformSafe(v: ReturnType<typeof useMotionValue<number>>) {
   return out;
 }
 
-export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
+function PopReveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        el,
+        { opacity: 0, scale: 0.92, y: 30 },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          delay: delay,
+          duration: 0.7,
+          ease: 'back.out(1.2)',
+          scrollTrigger: { trigger: el, start: 'top 85%', toggleActions: 'play none none none' },
+        }
+      );
+    }, el);
+    return () => ctx.revert();
+  }, [delay]);
+  return <div ref={ref}>{children}</div>;
+}
+export default function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   const [showModal, setShowModal] = useState(false);
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
@@ -229,7 +310,6 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   const [message, setMessage] = useState<string | null>(null);
   const { theme, toggleTheme } = useTheme();
 
-  // ---- Lenis smooth scroll, wired into GSAP's ScrollTrigger ----
   useEffect(() => {
     const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
     function raf(time: number) {
@@ -242,37 +322,24 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
     return () => lenis.destroy();
   }, []);
 
-  // ---- Cena 1: carta pinada, girando no eixo Y conforme o scroll ----
   const pinRef = useRef<HTMLDivElement>(null);
   const letterRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
-  const cardItemRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.set(cardsRef.current, { autoAlpha: 0 });
-      gsap.set(cardItemRefs.current, { y: -90, opacity: 0, rotate: () => gsap.utils.random(-8, 8) });
-
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: pinRef.current,
           start: 'top top',
-          end: '+=3200',
-          scrub: true,
+          end: '+=1300',
+          scrub: 0.6,
           pin: true,
           anticipatePin: 1,
         },
       });
-
-      // a carta gira várias voltas no eixo Y enquanto dá zoom out
-      tl.to(letterRef.current, { rotationY: 1440, scale: 0.3, transformPerspective: 1200, ease: 'none' }, 0)
-        // some em fade perto do fim da rotação
-        .to(letterRef.current, { autoAlpha: 0, ease: 'none' }, 0.82)
-        // os cards entram em fade + caem na "mesa diplomática" com stagger
-        .to(cardsRef.current, { autoAlpha: 1, ease: 'none' }, 0.84)
-        .to(cardItemRefs.current, { y: 0, opacity: 1, rotate: 0, duration: 1, stagger: 0.18, ease: 'back.out(1.6)' }, 0.86);
+      tl.to(letterRef.current, { rotationZ: 640, scale: 0.32, ease: 'none' }, 0)
+        .to(letterRef.current, { autoAlpha: 0, ease: 'none' }, 0.78);
     }, pinRef);
-
     return () => ctx.revert();
   }, []);
 
@@ -291,7 +358,6 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
       body.style.overflow = '';
     };
   }, [showModal]);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -322,7 +388,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         const { error: uploadError } = await supabase.storage.from('certificates').upload(fileName, certificateFile);
         if (uploadError) throw uploadError;
 
-        const { error: profileError } = await supabase
+        const { error: profileError = null } = await supabase
           .from('profiles')
           .insert({ id: authData.user.id, full_name: fullName, bio, email, status: 'pending' });
         if (profileError) throw profileError;
@@ -347,43 +413,38 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
     setMessage(null);
     setShowModal(true);
   };
-
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-obsidian text-ink dark:text-slate-100 relative overflow-x-hidden">
+    <div className="min-h-screen w-full bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 relative overflow-x-hidden selection:bg-amber-500/30">
       <FiligreeBar position="top" />
       <FiligreeBar position="bottom" />
 
-      {/* HEADER */}
-      <header className="fixed top-9 left-0 right-0 z-30 bg-white/80 dark:bg-obsidian/70 backdrop-blur-xl border-b border-seal/15">
+      <header className="fixed top-9 left-0 right-0 z-30 bg-white/80 dark:bg-neutral-950/70 backdrop-blur-xl border-b border-amber-500/15">
         <div className="w-full max-w-6xl mx-auto px-6 md:px-8 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-seal-dark to-seal flex items-center justify-center shadow-lg shadow-seal/30 rotate-45">
-              <span className="text-base text-white -rotate-45">◈</span>
-            </div>
+            <GlowLogo size={40} />
             <div className="leading-none">
-              <h1 className="font-display text-2xl italic font-semibold tracking-tight text-ink dark:text-white">Deletinder</h1>
-              <p className="hidden sm:block font-mono text-[9px] tracking-[0.25em] text-seal-dark uppercase mt-0.5">Corpo Diplomático · Sênior</p>
+              <h1 className="font-serif text-2xl italic font-semibold tracking-tight text-neutral-900 dark:text-white">Deletinder</h1>
+              <p className="hidden sm:block font-mono text-[9px] tracking-[0.25em] text-amber-600 uppercase mt-0.5">Relações Amorosas Soberanas</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => openModal('login')}
-              className="px-5 py-2.5 bg-obsidian dark:bg-white text-white dark:text-obsidian font-bold rounded-lg text-[11px] uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+              className="px-5 py-2.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-bold rounded-lg text-[11px] uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
             >
               Entrar
             </button>
             <button
               onClick={toggleTheme}
-              className="w-10 h-10 bg-seal/10 dark:bg-embassy rounded-lg border border-seal/25 flex items-center justify-center text-base cursor-pointer"
+              className="w-10 h-10 bg-amber-500/10 dark:bg-neutral-900 rounded-lg border border-amber-500/25 flex items-center justify-center text-base cursor-pointer text-amber-500"
               aria-label="Alternar tema"
             >
-              {theme === 'light' ? '✨' : '🌙'}
+              {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
           </div>
         </div>
       </header>
 
-      {/* TELA 1 — a carta pinada girando no eixo Y conforme o scroll */}
       <section ref={pinRef} className="relative w-full h-screen flex items-center justify-center overflow-hidden">
         <GoldParticles />
         <div ref={letterRef} className="relative w-[300px] sm:w-[380px] aspect-[3/4]" style={{ transformStyle: 'preserve-3d' }}>
@@ -391,46 +452,79 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
             initial={{ opacity: 0, scale: 0.7, y: 80, filter: 'blur(16px)' }}
             animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
             transition={{ type: 'spring', stiffness: 70, damping: 14, delay: 0.2 }}
-            className="relative w-full h-full rounded-sm bg-white border border-seal/40 shadow-[0_30px_70px_-15px_rgba(120,95,30,0.4)] px-8 py-10 flex flex-col items-center justify-center text-center overflow-hidden"
-            style={{ backfaceVisibility: 'hidden' }}
+            className="relative w-full h-full rounded-sm bg-stone-100 dark:bg-neutral-900 border-[3px] border-double border-amber-500/70 shadow-[0_30px_70px_-15px_rgba(120,95,30,0.45)] px-8 py-10 flex flex-col items-center justify-center text-center overflow-hidden"
+            style={{
+              backfaceVisibility: 'hidden',
+              backgroundImage:
+                'repeating-linear-gradient(135deg, rgba(156,122,31,0.035) 0px, rgba(156,122,31,0.035) 1px, transparent 1px, transparent 6px)',
+            }}
           >
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-gradient-to-br from-seal to-seal-dark border-4 border-white shadow-lg flex items-center justify-center text-white text-lg">
-              ◈
+            <div className="absolute inset-2 border border-amber-500/35 pointer-events-none" />
+            <span className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-amber-500/70 pointer-events-none" />
+            <span className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-amber-500/70 pointer-events-none" />
+            <span className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-amber-500/70 pointer-events-none" />
+            <span className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-amber-500/70 pointer-events-none" />
+            <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none">
+              <Logo size={220} />
             </div>
-            <p className="font-mono text-[9px] tracking-[0.3em] text-seal-dark uppercase mt-8 mb-4">Ato Diplomático Nº 001/2026</p>
-            <h2 className="font-display italic text-3xl sm:text-4xl font-semibold text-ink leading-tight">Diplomatizando<br />Encontros</h2>
-            <p className="font-mono text-[9px] tracking-[0.2em] text-ink-soft uppercase mt-4">Networking afetivo · Tratados de amor sênior</p>
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-stone-100 dark:bg-neutral-900 border-4 border-white dark:border-neutral-800 shadow-[0_8px_24px_rgba(156,122,31,0.35)] flex items-center justify-center ring-1 ring-amber-500/60">
+              <GlowLogo size={40} />
+            </div>
+            <p className="relative font-mono text-[9px] tracking-[0.3em] text-amber-600 uppercase mt-8 mb-4">Ato Diplomático Nº 001/2026</p>
+            <h2 className="relative font-serif italic text-3xl sm:text-4xl font-semibold text-neutral-900 dark:text-white leading-tight">Diplomatizando<br />Encontros</h2>
+            <p className="relative font-mono text-[9px] tracking-[0.2em] text-neutral-500 uppercase mt-4">Onde a diplomacia abre portas para o amor</p>
           </motion.div>
         </div>
       </section>
 
-      {/* TELA 2 — cards, revelados após a rotação da carta */}
-      <section ref={cardsRef} className="relative z-10 w-full max-w-5xl mx-auto px-6 pb-24 pt-32">
+      <section className="relative z-10 w-full max-w-5xl mx-auto px-6 pb-24 pt-32">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {DOSSIERS.map((item, idx) => (
-            <DossierCard key={item.titulo} item={item} setRef={(el) => (cardItemRefs.current[idx] = el)} />
+            <PopReveal key={item.titulo} delay={idx * 0.06}>
+              <DossierCard item={item} />
+            </PopReveal>
           ))}
         </div>
       </section>
 
-      {/* PROTOCOLO DE ADESÃO */}
+      <section className="relative z-10 w-full max-w-4xl mx-auto px-6 pb-24">
+        <RevealOnScroll className="grid grid-cols-3 gap-4 md:gap-10 py-10 border-y border-amber-500/20">
+          {STATS.map((s) => {
+            const StatIcon = s.icone;
+            return (
+              <div key={s.label} className="text-center flex flex-col items-center justify-center">
+                <div className="p-2 rounded-full bg-amber-500/5 border border-amber-500/10 mb-2 text-amber-500">
+                  <StatIcon className="w-4 h-4" />
+                </div>
+                <p className="font-serif italic text-2xl md:text-4xl font-semibold text-amber-600 dark:text-amber-500">{s.numero}</p>
+                <p className="font-mono text-[8px] md:text-[10px] tracking-[0.15em] md:tracking-[0.2em] text-neutral-500 dark:text-neutral-400 uppercase mt-2">{s.label}</p>
+              </div>
+            );
+          })}
+        </RevealOnScroll>
+      </section>
       <section className="relative z-10 w-full max-w-3xl mx-auto px-6 pb-28">
         <RevealOnScroll className="text-center mb-14">
-          <p className="font-mono text-[10px] tracking-[0.3em] text-seal-dark uppercase mb-2">Protocolo Nº 07/2026</p>
-          <h3 className="font-display italic text-3xl md:text-4xl font-semibold text-ink dark:text-white">Ordem de Adesão</h3>
+          <p className="font-mono text-[10px] tracking-[0.3em] text-amber-600 uppercase mb-2">Protocolo Nº 07/2026</p>
+          <h3 className="font-serif italic text-3xl md:text-4xl font-semibold text-neutral-900 dark:text-white">Ordem de Adesão</h3>
         </RevealOnScroll>
-
         <div className="relative pl-10 md:pl-14">
-          <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-seal via-seal/40 to-transparent" />
+          <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-amber-500 via-amber-500/40 to-transparent" />
           <div className="flex flex-col gap-14">
             {PROTOCOLO.map((step) => (
               <RevealOnScroll key={step.numero} className="relative">
-                <span className="absolute -left-10 md:-left-14 top-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white dark:bg-embassy border border-seal/50 flex items-center justify-center font-mono text-[10px] text-seal-dark dark:text-seal shadow-lg">
+                <motion.span
+                  initial={{ opacity: 0, scale: 1.6, rotate: -12 }}
+                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                  viewport={{ once: true, amount: 0.8 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 14 }}
+                  className="absolute -left-10 md:-left-14 top-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white dark:bg-neutral-900 border-2 border-amber-500/60 flex items-center justify-center font-mono text-[10px] text-amber-600 dark:text-amber-500 shadow-lg"
+                >
                   {step.numero}
-                </span>
+                </motion.span>
                 <div className="pb-1">
-                  <h4 className="font-display italic text-2xl font-semibold text-ink dark:text-white mb-1.5">{step.titulo}</h4>
-                  <p className="text-ink-soft dark:text-slate-400 text-[13px] leading-relaxed font-light max-w-md">{step.desc}</p>
+                  <h4 className="font-serif italic text-2xl font-semibold text-neutral-900 dark:text-white mb-1.5">{step.titulo}</h4>
+                  <p className="text-neutral-500 dark:text-neutral-400 text-[13px] leading-relaxed font-light max-w-md">{step.desc}</p>
                 </div>
               </RevealOnScroll>
             ))}
@@ -438,155 +532,128 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         </div>
       </section>
 
-      {/* FINAL CTA */}
       <section className="relative z-10 w-full max-w-3xl mx-auto px-6 pb-28 text-center">
         <RevealOnScroll>
-          <div className="relative py-14 px-8 rounded-2xl border border-seal/25 bg-white/60 dark:bg-embassy/40 backdrop-blur-md overflow-hidden">
-            <p className="font-mono text-[10px] tracking-[0.3em] text-seal-dark uppercase mb-3">Sessão Extraordinária</p>
-            <h3 className="font-display italic text-3xl md:text-4xl font-semibold text-ink dark:text-white mb-6">Pronto para ratificar seu próximo tratado?</h3>
-            <MagneticButton
-              onClick={() => openModal('signup')}
-              className="relative px-10 py-3.5 bg-gradient-to-r from-seal-dark via-seal to-seal-dark bg-[length:200%_auto] hover:bg-right text-white font-bold text-xs rounded-xl shadow-xl tracking-widest uppercase cursor-pointer"
-            >
-              Abrir Credencial
-            </MagneticButton>
+          <div className="relative py-14 px-8 rounded-2xl border border-amber-500/25 bg-white/60 dark:bg-neutral-900/40 backdrop-blur-md overflow-hidden">
+            <p className="font-mono text-[10px] tracking-[0.3em] text-amber-600 uppercase mb-3">Sessão Extraordinária</p>
+            <h3 className="font-serif italic text-3xl md:text-4xl font-semibold text-neutral-900 dark:text-white mb-6">Pronto para ratificar seu próximo tratado?</h3>
+            <div className="inline-block p-[2px] rounded-xl bg-gradient-to-r from-amber-600 via-amber-400 via-amber-500 to-amber-600 bg-[length:200%_auto] shadow-xl">
+              <MagneticButton
+                onClick={() => openModal('signup')}
+                className="relative px-10 py-3.5 bg-neutral-950 text-white font-bold text-xs rounded-[10px] tracking-widest uppercase cursor-pointer flex items-center gap-1"
+              >
+                Abrir Credencial <ChevronRight className="w-4 h-4" />
+              </MagneticButton>
+            </div>
           </div>
         </RevealOnScroll>
       </section>
 
-      <footer className="relative z-10 w-full text-center py-10 text-[10px] font-mono tracking-wider text-ink-light dark:text-slate-500 border-t border-seal/15">
-        <p>© 2026 DELETINDER · PERMISSÃO INSTITUCIONAL SOBERANA RESERVADA PARA MAIORES DE 18 ANOS</p>
-      </footer>
-
-      {/* AUTH MODAL */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-50 bg-obsidian/60 backdrop-blur-md flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              transition={{ type: 'spring', duration: 0.4 }}
-              className="w-full max-w-sm max-h-[85vh] flex flex-col bg-white dark:bg-embassy border border-seal/25 rounded-2xl shadow-2xl relative overflow-hidden"
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-neutral-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-neutral-900 border border-amber-500/20 max-w-md w-full rounded-2xl p-8 shadow-2xl relative"
             >
-              <button
+              <button 
                 onClick={() => setShowModal(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-sm bg-slate-100 dark:bg-obsidian w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer border-0 z-50 transition-colors"
+                className="absolute top-4 right-4 text-xs font-mono text-neutral-400 hover:text-white cursor-pointer"
               >
-                ✕
+                [fechar]
               </button>
-
-              <div className="flex-1 overflow-y-auto px-8 py-8">
-                <div className="text-center mb-5">
-                  <div className="flex justify-center mb-1.5 text-xl">◈</div>
-                  <h1 className="font-display italic text-3xl font-semibold text-ink dark:text-white">Deletinder</h1>
-                  <p className="font-mono text-[10px] text-seal-dark mt-1.5 uppercase tracking-widest">
-                    {mode === 'login' ? 'Credenciais Verificadas' : mode === 'signup' ? 'Requisição de Acesso' : 'Recuperação de Acesso'}
-                  </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-3">
-                  {mode === 'signup' && (
-                    <>
-                      <input
-                        type="text" placeholder="Nome completo" value={fullName}
-                        onChange={(e) => setFullName(e.target.value)} required
-                        className="w-full bg-slate-50 dark:bg-obsidian border border-seal/20 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-seal transition-colors"
-                      />
-                      <input
-                        type="text" placeholder="Bio ou Filiação Acadêmica" value={bio}
-                        onChange={(e) => setBio(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-obsidian border border-seal/20 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-seal transition-colors"
-                      />
-                    </>
-                  )}
-
-                  <input
-                    type="email" placeholder="E-mail de acesso" value={email}
-                    onChange={(e) => setEmail(e.target.value)} required
-                    className="w-full bg-slate-50 dark:bg-obsidian border border-seal/20 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-seal transition-colors"
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <h3 className="text-xl font-serif text-center italic text-neutral-950 dark:text-white">
+                  {mode === 'login' ? 'Autenticar Acesso' : mode === 'signup' ? 'Nova Credencial' : 'Recuperar Conta'}
+                </h3>
+                {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+                {message && <p className="text-green-500 text-xs text-center">{message}</p>}
+                <input 
+                  type="email" 
+                  placeholder="E-mail Institucional" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs text-neutral-900 dark:text-white"
+                  required
+                />
+                {mode !== 'forgot_password' && (
+                  <input 
+                    type="password" 
+                    placeholder="Assinatura Digital (Senha)" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs text-neutral-900 dark:text-white"
+                    required
                   />
-
-                  {mode !== 'forgot_password' && (
-                    <input
-                      type="password" placeholder="Senha secreta" value={password}
-                      onChange={(e) => setPassword(e.target.value)} required minLength={6}
-                      className="w-full bg-slate-50 dark:bg-obsidian border border-seal/20 rounded-xl px-3.5 py-2.5 text-xs placeholder-slate-400 text-ink dark:text-white focus:outline-none focus:border-seal transition-colors"
-                    />
-                  )}
-
-                  {mode === 'signup' && (
-                    <>
-                      <div className="pt-1">
-                        <label className="block text-[10px] text-ink-light dark:text-slate-500 mb-1.5 font-semibold">Anexar Certificado ONU (PDF, JPG, PNG)</label>
-                        <input
-                          type="file" accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => setCertificateFile(e.target.files?.[0] || null)} required
-                          className="w-full text-xs text-slate-500 file:mr-2.5 file:py-1.5 file:px-3 file:border-0 file:rounded-xl file:bg-slate-100 dark:file:bg-obsidian file:text-slate-700 dark:file:text-slate-300 file:text-[11px] file:font-bold hover:file:bg-seal hover:file:text-white cursor-pointer transition-colors"
-                        />
-                      </div>
-                      <div className="flex items-start gap-2 pt-2.5 pb-0.5">
-                        <input
-                          type="checkbox" id="age-confirmation" checked={isOfAge}
-                          onChange={(e) => setIsOfAge(e.target.checked)}
-                          className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-seal focus:ring-seal cursor-pointer"
-                        />
-                        <label htmlFor="age-confirmation" className="text-[11px] leading-tight text-ink-light dark:text-slate-500 select-none cursor-pointer">
-                          Declaro que possuo <strong>18 anos ou mais</strong> e assumo total responsabilidade legal.
-                        </label>
-                      </div>
-                    </>
-                  )}
-
-                  {error && <p className="text-red-500 text-xs text-center pt-1.5 font-semibold">{error}</p>}
-                  {message && <p className="text-green-500 text-xs text-center pt-1.5 font-semibold">{message}</p>}
-
-                  <button
-                    type="submit" disabled={loading}
-                    className="w-full mt-4 bg-gradient-to-r from-seal-dark to-seal text-white font-bold text-xs py-3 rounded-xl transition-all disabled:opacity-50 cursor-pointer hover:opacity-95"
-                  >
-                    {loading ? 'Processando...' : mode === 'login' ? 'Autenticar' : mode === 'signup' ? 'Enviar Pedido' : 'Enviar Link'}
-                  </button>
-                </form>
-
-                {mode === 'login' && (
-                  <div className="text-center mt-4">
-                    <button
-                      type="button"
-                      onClick={() => { setMode('forgot_password'); setError(null); setMessage(null); }}
-                      className="text-[11px] text-ink-light dark:text-slate-500 hover:text-seal-dark bg-transparent border-0 cursor-pointer"
-                    >
-                      Esqueceu seus dados de acesso?
-                    </button>
-                  </div>
                 )}
-
-                <div className="flex items-center my-4">
-                  <div className="flex-1 h-px bg-seal/15" />
-                  <span className="px-2.5 text-slate-400 dark:text-slate-600 text-[10px] font-bold">OU</span>
-                  <div className="flex-1 h-px bg-seal/15" />
+                {mode === 'signup' && (
+                  <>
+                    <input 
+                      type="text" 
+                      placeholder="Nome Completo" 
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full px-4 py-3 bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs text-neutral-900 dark:text-white"
+                      required
+                    />
+                    <textarea 
+                      placeholder="Breve memorial/biografia acadêmica ou profissional" 
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      className="w-full px-4 py-3 bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs h-20 resize-none text-neutral-900 dark:text-white"
+                    />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] uppercase font-mono text-neutral-400">Anexar Certificado Requerido</label>
+                      <input 
+                        type="file" 
+                       onChange={(e) => setCertificateFile(e.target.files ? e.target.files[0] : null)}
+                        className="text-xs text-neutral-400"
+                        required
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-xs text-neutral-400 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={isOfAge}
+                        onChange={(e) => setIsOfAge(e.target.checked)}
+                      />
+                      Declaro possuir maioridade legal (18+ anos)
+                    </label>
+                  </>
+                )}
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-neutral-950 font-bold rounded-xl text-xs uppercase tracking-wider disabled:opacity-50"
+                >
+                  {loading ? 'Processando...' : mode === 'login' ? 'Entrar no Gabinete' : mode === 'signup' ? 'Solicitar Adesão' : 'Enviar Link'}
+                </button>
+                <div className="flex justify-between items-center text-[10px] text-neutral-400 font-mono pt-2">
+                  {mode === 'login' ? (
+                    <>
+                      <button type="button" onClick={() => setShowModal(false)} className="hover:underline">Criar Credencial</button>
+                      <button type="button" onClick={() => setShowModal(false)} className="hover:underline">Esqueci a senha</button>
+                    </>
+                  ) : (
+                    <button type="button" onClick={() => setMode('login')} className="w-full text-center hover:underline">Já possuo credencial protocolada</button>
+                  )}
                 </div>
-
-                <div className="text-center text-xs pb-1">
-                  <span className="text-ink-light dark:text-slate-500 text-[11px]">
-                    {mode === 'login' ? 'Ainda não é credenciado?' : mode === 'signup' ? 'Já possui cadastro ativo?' : 'Lembrou seus dados?'}
-                  </span>{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (mode === 'login') setMode('signup'); else setMode('login');
-                      setIsOfAge(false); setError(null); setMessage(null);
-                    }}
-                    className="text-[11px] text-seal-dark font-bold hover:underline bg-transparent border-0 cursor-pointer"
-                  >
-                    {mode === 'login' ? 'Cadastre-se' : 'Conecte-se'}
-                  </button>
-                </div>
-              </div>
+              </form>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
+
+      <footer className="relative z-10 w-full text-center py-10 text-[10px] font-mono tracking-wider text-neutral-400 border-t border-neutral-200 dark:border-neutral-900">
+        © 2026 Deletinder Corretora Affectio. Todos os direitos reservados sob sigilo protocolar.
+      </footer>
     </div>
   );
 }

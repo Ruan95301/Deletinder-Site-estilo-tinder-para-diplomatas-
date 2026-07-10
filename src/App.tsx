@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
 import { ThemeProvider } from './hooks/useTheme';
-import { AuthScreen } from './components/AuthScreen';
+import AuthScreen from './components/AuthScreen';
 import { PendingApproval } from './components/PendingApproval';
 import { MainApp } from './components/MainApp';
 import { ModeratorDashboard } from './components/ModeratorDashboard';
