@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
 import { ThemeProvider } from './hooks/useTheme';
+import { LenisProvider } from './hooks/useLenis';
+import IntroExperience from './components/Intro/IntroExperience';
 import AuthScreen from './components/AuthScreen';
 import { PendingApproval } from './components/PendingApproval';
 import { MainApp } from './components/MainApp';
@@ -91,7 +93,10 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <LenisProvider>
+        <IntroExperience />
+        <AppContent />
+      </LenisProvider>
     </ThemeProvider>
   );
 }

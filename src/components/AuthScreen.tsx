@@ -4,7 +4,6 @@ import { useTheme } from '../hooks/useTheme';
 import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from 'lenis';
 import { cn } from '../utils/cn';
 import { FileText, ShieldAlert, MailOpen, Users, Globe2, CheckCircle2, ChevronRight, Sun, Moon } from 'lucide-react';
 gsap.registerPlugin(ScrollTrigger);
@@ -324,20 +323,11 @@ export default function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => voi
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    const lenis = new Lenis({ duration: 1.2, smoothWheel: true });
-    function raf(time: number) {
-      lenis.raf(time);
-      ScrollTrigger.update();
-      requestAnimationFrame(raf);
-    }
-    requestAnimationFrame(raf);
-    
-    lenis.on('scroll', (e: any) => {
-      ScrollTrigger.update();
-      setIsScrolled(e.scroll > 40);
-    });
-    
-    return () => lenis.destroy();
+    // O Lenis agora é centralizado no LenisProvider (App.tsx).
+    // Aqui só escutamos o scroll nativo pra saber quando encolher a navbar.
+    const onScroll = () => setIsScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const pinRef = useRef<HTMLDivElement>(null);
